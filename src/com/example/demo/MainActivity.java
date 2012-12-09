@@ -1,7 +1,9 @@
 package com.example.demo;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,10 +16,10 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
 public class MainActivity extends Activity {
@@ -67,11 +69,13 @@ public class MainActivity extends Activity {
 		new TwitterSearch().execute(query);
 	}
 	
-	private class TwitterSearch extends AsyncTask<String, Void, List<String>> {
+	private class TwitterSearch extends AsyncTask<String, Void, List<Map<String,String>>> {
+		private static final String KEY_TWEET = "tweet";
+		private static final String KEY_FROM = "from";
 		private Exception exception = null;
 
 		@Override
-		protected List<String> doInBackground(String... query) {
+		protected List<Map<String, String>> doInBackground(String... query) {
 			String q = query[0];
 			try {
 				JSONArray searchResult = TwitterHelper.performSearch(q);
@@ -85,21 +89,24 @@ public class MainActivity extends Activity {
 		}
 		
 		@Override 
-		protected void onPostExecute(List<String> tweets) {
+		protected void onPostExecute(List<Map<String,String>> tweets) {
 			if (exception!=null) {
 				Toast.makeText(getApplicationContext(), "Searching failed: "+exception.getMessage(), Toast.LENGTH_SHORT).show();
 			} else if (tweets!=null) {
-				String[] arrayTweets = tweets.toArray(new String[1]);
-				ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, arrayTweets);
+				SimpleAdapter adapter = new SimpleAdapter(MainActivity.this, tweets,
+						android.R.layout.simple_list_item_2, new String[]{KEY_TWEET, KEY_FROM}, new int[]{android.R.id.text1, android.R.id.text2});
 				tweetsList.setAdapter(adapter);
 			}
 		}
 
-		private List<String> createTweetsList(JSONArray searchResult) throws JSONException {
-			List<String> tweets = new ArrayList<String>();
+		private List<Map<String, String>> createTweetsList(JSONArray searchResult) throws JSONException {
+			List<Map<String,String>> tweets = new ArrayList<Map<String,String>>();
 			for (int i =0; i<searchResult.length(); i++) {
 				JSONObject tweet = searchResult.getJSONObject(i);
-				tweets.add(tweet.getString("text"));
+				Map<String, String> pair = new HashMap<String, String>();
+				pair.put(KEY_TWEET, tweet.getString("text"));
+				pair.put(KEY_FROM, tweet.getString("from_user"));
+				tweets.add(pair);
 			}
 			return tweets;
 		}
