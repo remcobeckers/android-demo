@@ -1,9 +1,18 @@
 package com.example.demo;
 
-import android.os.Bundle;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
+import android.os.AsyncTask;
+import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -43,9 +52,47 @@ public class MainActivity extends Activity {
 		return true;
 	}
 
-
 	private void searchTwitter(String query) {
-		Toast.makeText(this, "Searching for "+query, Toast.LENGTH_SHORT).show();
+		new TwitterSearch().execute(query);
+	}
+	
+	private class TwitterSearch extends AsyncTask<String, Void, List<String>> {
+		private Exception exception = null;
+
+		@Override
+		protected List<String> doInBackground(String... query) {
+			String q = query[0];
+			try {
+				JSONArray searchResult = TwitterHelper.performSearch(q);
+				if (searchResult!=null) {
+					return createTweetsList(searchResult);
+				}
+			} catch (Exception e) {
+				exception = e;
+			}
+			return null;
+		}
+		
+		@Override 
+		protected void onPostExecute(List<String> tweets) {
+			if (exception!=null) {
+				Toast.makeText(getApplicationContext(), "Searching failed: "+exception.getMessage(), Toast.LENGTH_SHORT).show();
+			} else if (tweets!=null) {
+				String[] arrayTweets = tweets.toArray(new String[1]);
+				ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, arrayTweets);
+				tweetsList.setAdapter(adapter);
+			}
+		}
+
+		private List<String> createTweetsList(JSONArray searchResult) throws JSONException {
+			List<String> tweets = new ArrayList<String>();
+			for (int i =0; i<searchResult.length(); i++) {
+				JSONObject tweet = searchResult.getJSONObject(i);
+				tweets.add(tweet.getString("text"));
+			}
+			return tweets;
+		}
+
 	}
 
 }
