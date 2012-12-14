@@ -1,11 +1,6 @@
 package com.example.demo;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -19,6 +14,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.example.demo.TwitterHelper.Tweet;
 
 public class MainActivity extends Activity {
 
@@ -67,17 +64,14 @@ public class MainActivity extends Activity {
 		new TwitterSearch().execute(query);
 	}
 	
-	private class TwitterSearch extends AsyncTask<String, Void, List<String>> {
+	private class TwitterSearch extends AsyncTask<String, Void, List<Tweet>> {
 		private Exception exception = null;
 
 		@Override
-		protected List<String> doInBackground(String... query) {
+		protected List<Tweet> doInBackground(String... query) {
 			String q = query[0];
 			try {
-				JSONArray searchResult = TwitterHelper.performSearch(q);
-				if (searchResult!=null) {
-					return createTweetsList(searchResult);
-				}
+				return TwitterHelper.performSearch(q);
 			} catch (Exception e) {
 				exception = e;
 			}
@@ -85,23 +79,23 @@ public class MainActivity extends Activity {
 		}
 		
 		@Override 
-		protected void onPostExecute(List<String> tweets) {
+		protected void onPostExecute(List<Tweet> tweets) {
 			if (exception!=null) {
 				Toast.makeText(getApplicationContext(), "Searching failed: "+exception.getMessage(), Toast.LENGTH_SHORT).show();
 			} else if (tweets!=null) {
-				String[] arrayTweets = tweets.toArray(new String[1]);
-				ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, arrayTweets);
+				ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, convertTweets(tweets));
 				tweetsList.setAdapter(adapter);
 			}
 		}
-
-		private List<String> createTweetsList(JSONArray searchResult) throws JSONException {
-			List<String> tweets = new ArrayList<String>();
-			for (int i =0; i<searchResult.length(); i++) {
-				JSONObject tweet = searchResult.getJSONObject(i);
-				tweets.add(tweet.getString("text"));
+		
+		private String[] convertTweets(List<Tweet> tweets) {
+			String[] result = new String[tweets.size()];
+			int n = 0;
+			for (Tweet tweet : tweets) {
+				result[n] = tweet.tweet;
+				n++;
 			}
-			return tweets;
+			return result;
 		}
 
 	}
