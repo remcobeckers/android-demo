@@ -18,6 +18,7 @@ Each step in the presentation is available in its own branch with the final resu
 the Eclipse ADT checkout the repository and import an existing android project.
 
 The steps for creating the app were:
+
 1. Create application and create layout for main activity
 2. Add some action under the search button
 3. Implement the Twitter search and fill the ListView with the search result (using ArrayAdapter)
